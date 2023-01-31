@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+
+    /* 
+    리플로우와 리페인트
+    
+    리플로우 :: 어떤 위치에 어떤 요소를 배치할 지 계산
+
+    리페인트 :: 리플로우 계산결과를 토대로 렌더링을 함
+
+    리플로우 연산은 리페인트 연산보다 훨씩 무거움
+    */
+
+    .container {
+      width: 200px;
+      height: 200px;
+      border: 15px solid #000;
+    }
+
+    .item {
+      width: 100px;
+      height: 100px;
+      background-color: orange;
+      transition:  1s;
+    }
+
+    /* margin값을 수정하면 리플로우가 발생 */
+    .container:hover .item {
+      margin-left: 300px;
+    }
+
+    /* transform은 리플로우가 발생하지 않아 브라우저의 부담을 줄임 */
+    .container:hover .item {
+      transform: translateX(300px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="item"></div>
+  </div>
+</body>
+</html>
