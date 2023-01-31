@@ -16,7 +16,7 @@ console.log(count()) //3
 
 /*
 
-  count()는 add()를 반환
+  createCount()는 add()를 반환
   결국 count()는 add()
   add()는 선언당시의 유효범위를 기억하기에 let a 를 참조 할 수 있음
 
