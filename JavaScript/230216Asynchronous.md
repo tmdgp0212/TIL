@@ -61,3 +61,87 @@
 
   wrap();
 ```
+
+## 반복문에서의 비동기 처리
+
+```js
+function getMovies() {
+  fetch('https://~~~~')
+  .then(res => json())
+  .then(res => resolve(res))
+}
+
+const titles = ['frozen', 'avengers', 'avatar']
+
+//잘못된방법
+//forEach는 호출의 순서는 보장해주지만 응답을 기다려주진 않는다
+titles.forEach( async(title) => {
+  const movies = await getMovies(title)
+  console.log(title, movies)
+})
+
+//올바른방법
+//일반포문은 promise객체의 응답을 기다렸다가 다음 반복문을 호출
+const wrap = async () => {
+  for (const title of titles) {
+    const movies = await getMovies(title)
+    console.log(title, movies)
+  }
+}
+```
+
+
+## promise.all()
+
+- 여러개의 프로미스객체를 배열로 넣어 모든 요청에 응답이 온 다음에 결과값을 반환하도록 함   
+`@returns {Array}`
+
+```js
+  const a = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(1)
+      }, 1000)
+    })
+  }
+  const b = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(2)
+      }, 2000)
+    })
+  }
+
+  const wrap = async () => {
+    const [resA, resB] = await Promise.all([a(), b()])
+    console.log(resA, resB)
+  }
+  wrap()
+```
+
+## Promise.race()
+
+- 여러개의 프로미스객체 중 더 먼저 완료되는 결과만 이행/거부 합니다.
+
+```js
+  const a = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(1)
+      }, 1000)
+    })
+  }
+  const b = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(2)
+      }, 2000)
+    })
+  }
+
+  const wrap = async () => {
+    const res = await Promise.race([a(), b()])
+    console.log(res) // 1
+  }
+  wrap()
+```
