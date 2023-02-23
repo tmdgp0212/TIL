@@ -160,3 +160,68 @@ class User implements UserInterface {
 
 - 수많은 속성을 가지거나 단언할 수 없는 임의의 속성이 포함되는 구조에서는 인덱스 시그니처(Index signature)를 사용할 수 있다
 
+```ts
+interface User {
+  //인덱스시그니처
+  //보통 unknown타입을 지정
+  [key: string]: unknown
+}
+const heropy: User = {
+  name: 'Heropy',
+  age: 85
+}
+
+// 키값은 string이고 value값은 unknown(모든 타입)인 추가 속성을 할당할 수 있다
+console.log(heropy['isValid'])
+heropy['isValid'] = true
+```
+
+```ts
+interface User {
+  //인덱스시그니처에 특정타입을 지정하는경우 
+  [key: string]: string
+  name: string
+  age: number // Error! 인덱스시그니처가 우선 됨. string타입만 할당가능
+}
+const heropy: User = {
+  name: 'Heropy',
+  age: 85 //Error!
+}
+
+// key값과 value값이 string인 추가 속성을 할당할 수 있다
+heropy['city'] = 'seoul'
+heropy['isValid'] = true //Error!
+```
+
+- 타입을 인덱싱할 수 있다
+
+```ts
+interface User {
+  name: string,
+  age: number
+}
+const a: User['name'] = 123 // Error!
+```
+
+## 인터페이스 확장
+
+- 같은이름의 인터페이스를 여러개 만들었을 때 하나의 인터페이스로 병합된다
+
+- 인터페이스 내에 같은 이름의 속성이 있다면 타입이 같아야한다
+
+```ts
+  interface FullName {
+    firstName: string
+    lastName: string
+  }
+  interface FullName {
+    middleName: string
+    lastName: boolean // Error! - 'lastName' 속성이 'string' 형식이어야 합니다.(2717)
+  }
+
+  const fullName: FullName = {
+    firstName: 'Tomas',
+    middleName: 'Sean',
+    lastName: 'Connery'
+  }
+```
