@@ -1,0 +1,274 @@
+# react query 
+
+- 서버 데이터 요청/관리를 위한 라이브러리
+- 사용자에게 보여지는 데이터와 서버에 저장되어지는 데이터가 다른 경우, 두 데이터를 별개의 데이터로 관리하게 됨 (백엔드데이터와 프론트엔드데이터의 분리)
+
+- react-query의 유용한 기능
+  - 서버데이터 캐싱
+  - 데이터가 오래 된 경우 재요청으로 갱신
+  - 한번 get해온 데이터에대해 해당 데이터가 업데이트 되면 재요청
+  - 동일한 데이터를 여러번 요청하는 경우 중복 요청을 방지 (한번만 요청)
+  - 요청실패 시 자동으로 재요청
+  - 특정화면에 focus되었을 때 데이터 요청 
+
+## 셋팅
+
+
+- 기본 세팅
+```js
+import {QueryClient, QueryClientProvider} from "react-qeury"
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <컴포넌트 />
+    </QueryClientProvider>
+  )
+}
+
+export default App;
+```
+
+- devtools 사용
+
+`ReactQueryDevtools` 를 import해준 뒤
+```js
+import { ReactQueryDevtools } from 'react-query/devtools'
+```
+
+해당컴포넌트를 최상단(App.jsx)에 위치시킴
+```js
+<ReactQueryDevtools initialIsOpen={true} />
+```
+
+## useQuery
+
+- GET요청을 보내기 위한 함수
+- 쿼리의 키값이 같으면 데이터를 재요청하지 않고 캐싱 된 데이터를 사용
+
+```js
+const { isLoading, data, error } = useQuery(쿼리 키값, axios 요청보내는 함수, {쿼리 옵션})
+```
+
+### 쿼리키
+  - 보내는 요청에 대한 응답데이터에 이름을 붙이는 것
+  - `const data = queryClient.getQueryData(queryKey)`와 같은 형태로 어디서든 쿼리키로 응답데이터를 꺼내와서 사용할 수 있다
+  - 배열형태로 적는것이 관례
+
+### 쿼리함수
+  - 데이터 요청을 보내는 함수
+
+### 쿼리 옵션
+
+> **데이터의 상태**
+>  - fresh : 데이터가 신선한 (마지막 응답으로 부터 오래지나지 않은) 상태
+>  - stale : 데이터가 오래된 상태 (재요청을 보낼 필요가 있음)
+
+1. staleTime (데이터의 fresh 상태 유지 기간)
+```js
+// staleTime을 10초로 설정
+const { isLoading, data: posts, error } = useQuery('posts', getPosts, { staleTime: 10000 })
+```
+
+2. cacheTime
+- 쿼리 요청을 보낸 페이지를 보다가, 다른 페이지를 보게 될 경우 처음의 쿼리는 `inactive 상태` (응답 데이터가 있지만 표시는 하지 않고 있는 상태) 가 됨
+이 순간부터 얼마동안 데이터를 보관하고 있을 지 선택하는 것
+
+3. refetchOnWindowFocus
+
+- react-query는 기본적으로 윈도우에 focus에 될 때 마다 데이터를 재요청한다 (stale상태일때만)
+- 해당 옵션을 false로 설정하면 윈도우에 focus되더라도 데이터를 재요청하지 않음
+
+4. retry
+
+- 실패한 쿼리에대해 재요청을 몇번까지 재시도 할 지 설정
+- 값을 true로 놓으면 무한 재요청
+
+```js
+const { isLoading, data: posts, error } = useQuery('posts', getPosts, { retry: 3 })
+```
+
+
+5. refetch
+
+- 재요청함수
+```js
+const { isLoading, data: posts, error, refetch } = useQuery('posts', getPosts, {})
+```
+
+6. enabled
+- 해당 쿼리의 활성화여부
+- true로 값을 주면 쿼리요청을 보내고, false면 쿼리요청을 보내지 않음
+- 특정한 동작이 완료 된 후에 쿼리를 동작시키고 싶을 때 사용
+
+```js
+const [isPrepared, setIsPrepared] = useState(false)
+const { isLoading, data: posts, error } = useQuery('posts', getPosts, { enabled: isPrepared })
+```
+
+7. onSuccess, onError, onSettled
+- onSuccess : 요청이 성공했을 때 실행 되는 함수
+- onError : 요청이 실패했을 때 실행 되는 함수
+- onSettled : 요청의 성공/실패여부와 상관없이 요청이 끝났을 때 실행되는 함수
+
+```js
+ const {
+    isLoading,
+    data: posts,
+    error
+  } = useQuery("posts", getPosts, {
+    onSuccess: (data) => {
+      //요청이 성공했을 때 실행 되는 함수
+    },
+    onError: (data) => {
+      //요청이 실패했을 때 실행 되는 함수
+    },
+    onSettled: (data) => {
+      //요청의 성공/실패여부와 상관없이 요청이 끝났을 때 실행되는 함수
+    }
+  });
+```
+
+8. select
+```js
+ const {
+    isLoading,
+    data: posts,
+    error
+  } = useQuery("posts", getPosts, {
+    select : (data) => {
+      // return값만 선택적으로 useQuery의 응답 data로 넘겨줌
+      return data.filter(post => post.id !== 1)
+    }
+  });
+```
+
+### 리턴값
+  - isLoading : 로딩 중인지 여부 (처음 요청을 하는 경우)
+  - isFetching : 로딩 중인지 여부 (첫 요청 이후에 refetch 를 하는 경우)
+  - isError : 에러 여부
+  - isSuccess : 요청 성공 여부
+  - error : 에러 객체
+  - status : 현재 상태 (loading, error, success 가 들어감, is~~~ 대신 사용 가능)
+  - data : 응답 데이터
+  - refetch : 다시 요청을 하기 위한 함수 (이 함수를 실행하면 해당 요청을 다시 보낼 수 있음)
+
+## useQueries
+
+- 한번에 여러개의 요청을 관리 
+
+useQueries를 사용하지않더라도 아래와 같이 병렬요청은 가능
+```js
+const {data: users} = useQuery('users', getUsers)
+const {data: posts} = useQuery('posts', getPosts)
+```
+
+그러나 각각의 요청에 대해 loading과 error를 처리해주어야 함
+이를 해결하기 위해서 `useQueries` 사용
+
+```js
+const results = useQueries([
+    {
+        queryKey: 'users',
+        queryFn: getUsers,
+    },
+    {
+        queryKey: 'posts',
+        queryFn: getPosts,
+    },
+])
+
+// 로딩을 한번에 처리 가능
+useEffect(() => { // 하나라도 로딩 중이면 isLoading 은 true
+    const isLoading = results.some((result) => result.isLoading)
+    console.log(isLoading)
+}, [results])
+```
+
+## useMutation
+
+- post, put, delete등의 method로 서버데이터에 변화를 일으킬 때 사용
+
+```js
+const { mutate, isLoading, error } = useMutation(axios 요청 함수);
+```
+
+-  useQuery는 페이지 실행시 바로 동작, useMutate는 mutate()함수 실행 시 동작
+  `mutate(보낼 객체)`
+
+
+### 요청 후 처리 / success, error, settled, mutate
+
+1. onMutate
+- 요청을 보내는 순간 실행되는 함수 (mutate() 실행시)
+
+```js
+const { mutate, isLoading, error } = useMutation(createPost, {
+    onMutate: (variables) => {
+      // 요청을 보내는 순간 실행되는 함수 (mutate() 실행시)
+      // 인자로 요청시 내가 보낸 값을 받음 
+        console.log('요청 시 내가 명시한 값', variables)
+
+      //return값은 onSuccess에서 context로 받아올 수 있음 
+        return {id: 1}
+    },
+    onSuccess: (data, variables, context) => {
+      // onMutate에서 return한 값 : context
+      console.log(context) //{id: 1}
+    }
+})
+```
+
+2. onSuccess, onError, Settled
+
+- onSuccess : 요청이 성공했을 때 실행 되는 함수
+  - 원본데이터가 수정되기 때문에 수정 된 최신데이터를 다시 불러오는것이 좋음 `queryClient.invalidateQueries()`
+  - 특정한 데이터만 수정되는 경우 해당 데이터만 따로 불러오면 됨 `queryClient.SetQueryData(['쿼리키', 글번호], 전체데이터)`
+- onError : 요청이 실패했을 때 실행 되는 함수
+- onSettled : 요청의 성공/실패여부와 상관없이 요청이 끝났을 때 실행되는 함수
+
+```js
+const queryClient = useQueryClient()
+
+const { mutate, isLoading, error } = useMutation(createPost,{
+    onSuccess: (data) => {
+    //요청이 성공했을 때 실행 되는 함수
+
+    //'posts'key를 가진 쿼리데이터를 업데이트함(다시 불러옴)
+    queryClient.invalidateQueries('posts')
+    //=> 게시글을 새로 작성 -> 현재 가진 게시글데이터는 작성이전의 데이터 -> 최신버전으로 다시 호출
+
+    //만약 특정한 게시글에 대한 수정이라면 ['posts', 글번호(id)] 만 다시 보내면 됨 
+    queryClient.SetQueryData(['posts', 1], data)
+  },
+  onError: (data) => {
+    //요청이 실패했을 때 실행 되는 함수
+  },
+  onSettled: (data) => {
+    //요청의 성공/실패여부와 상관없이 요청이 끝났을 때 실행되는 함수
+  }
+})
+```
+
+## 전역설정 
+
+- App.jsx에 명시되어있는 QueryClient에 각종 옵션을 전역옵션으로 설정해줄 수 있다
+
+```js
+//공통설정(전역설정)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10000,
+      refetchOnWindowFocus: false,
+    },
+  },
+  queryCache: new QueryCache({
+    onSuccess: (data) => {
+      console.log(data);
+    },
+  }),
+});
+```
